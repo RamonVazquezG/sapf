@@ -1,0 +1,64 @@
+# Infraestructura distribuida de bases de datos: un nodo catálogo + un nodo por facultad.
+# Los scripts de db/ se ejecutan automáticamente la primera vez que se crea cada volumen.
+services:
+  # Base de datos central para catálogo de facultades y registro de nodos
+  db-catalog:
+    image: postgres:16-alpine
+    container_name: unov_db_catalog
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root_password
+      POSTGRES_DB: catalog_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - catalog_data:/var/lib/postgresql/data
+      - ./db/catalog.sql:/docker-entrypoint-initdb.d/01_catalog.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d catalog_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Nodo 1: Base de datos para Facultad de Ingeniería
+  db-faculty-ingenieria:
+    image: postgres:16-alpine
+    container_name: unov_db_ingenieria
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: faculty_ingenieria_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - ingenieria_data:/var/lib/postgresql/data
+      - ./db/faculty.sql:/docker-entrypoint-initdb.d/01_faculty.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d faculty_ingenieria_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Nodo 2: Base de datos para Facultad de Medicina
+  db-faculty-medicina:
+    image: postgres:16-alpine
+    container_name: unov_db_medicina
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: faculty_medicina_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - medicina_data:/var/lib/postgresql/data
+      - ./db/faculty.sql:/docker-entrypoint-initdb.d/01_faculty.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d faculty_medicina_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  catalog_data:
+  ingenieria_data:
+  medicina_data:
