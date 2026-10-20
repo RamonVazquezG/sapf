@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SAPF · Sistema de Asistencia Multi-Facultad
 
-## Getting Started
+Next.js (App Router, Cache Components) + PostgreSQL distribuido: un **nodo catálogo** central y **un nodo por facultad**.
 
-First, run the development server:
+## Puesta en marcha
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+cp .env.example .env.local   # cadena de conexión al catálogo
+pnpm install
+pnpm db:up                   # levanta catálogo + nodos (docker compose)
+pnpm db:migrate              # aplica db/faculty.sql en todos los nodos activos
+pnpm db:seed                 # (opcional) datos de demostración
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estructura
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Ruta | Descripción |
+| --- | --- |
+| `db/catalog.sql`, `db/faculty.sql` | Esquemas del catálogo y de cada nodo (idempotentes) |
+| `lib/db/catalog.ts` | Acceso al catálogo central |
+| `lib/db/nodeResolver.ts` | Pool dinámico por facultad resuelto desde el catálogo |
+| `lib/db/migrations.ts` | Migración de nodos nuevos y chequeo de salud |
+| `lib/data.ts` | Consultas sobre los nodos de facultad |
+| `app/actions/` | Acciones de servidor (administración y asistencia) |
+| `app/[facultySlug]/[programId]/[groupId]/[subjectId]` | Navegación jerárquica, tablero, pase de lista y exportación CSV |
+| `app/admin/*` | CRUD de facultades/nodos, carreras, grupos, materias, profesores y alumnos |
+| `scripts/migrate.ts`, `scripts/seed.ts` | Migración orquestada y datos de ejemplo |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Agregar una facultad nueva
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Añade un servicio PostgreSQL en `docker-compose.yml` (p. ej. puerto `5435`) y ejecútalo.
+2. En **Administración → Facultades / Nodos**, regístrala con sus datos de conexión: el esquema se aplica automáticamente.
